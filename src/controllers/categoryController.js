@@ -37,10 +37,6 @@ export const getCategoryController = async (req, res) => {
 }
 
 
-
-
-
-
 export const updateCategoryController = async (req, res) => {
 
     try {

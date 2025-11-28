@@ -10,7 +10,7 @@ const addProducts = async (req, res) => {
         }
 
         console.log(name)
-      
+
         const items = new Items({
             name: name,
             description: description,
@@ -32,35 +32,60 @@ const addProducts = async (req, res) => {
 
 }
 
-const getAllItems = async (req,res) => {
+const getAllItems = async (req, res) => {
     const data = await Items.find();
     return res.json({ success: true, message: "All items fetched successfully!!", data: data })
 }
 
-const editItems = async (req,res)=>{
-    console.log("idididididdidijskfnksn")
-   const { id } = req.params;
+const editItems = async (req, res) => {
+    try {
+        console.log("idididididdidijskfnksn")
+        const { id } = req.params;
 
-   console.log(id)
+        console.log(id)
 
-    const { name, description, price, images, stock, category, subcategory, seller } = req.body;
+        const { name, description, price, images, stock, category, subcategory, seller } = req.body;
 
-    console.log(name)
+        console.log(name)
 
-   if(!id)
-   {
-    return res.json({message:"To edit item provide ItemId"});
-   }
+        if (!id) {
+            return res.json({ message: "To edit item provide ItemId" });
+        }
 
-   console.log("sfkjslkj")
+        console.log("sfkjslkj")
 
-   await Items.findByIdAndUpdate(id,{name:name});
-
-
+        await Items.findByIdAndUpdate(id, { name: name, description: description, price: price });
 
 
+        return res.json({ message: "Edit successfully!!" })
+    }
+    catch (e) {
+        return res.json({ message: e })
+    }
 
-   return res.json({message:"Edit successfully!!"})
-} 
+}
 
-export { addProducts, getAllItems,editItems };
+const deleteItembyId = async (req, res) => {
+    try {
+        console.log("deleted call")
+        const { id } = req.params;
+
+        const notFound = await Items.findById(id);
+        if(!notFound)
+        {
+            return res.json({message:"Item is not found with this Id."});
+        }
+      
+        const deletedData = await Items.findByIdAndDelete(id);
+
+        console.log("deleted call12345",deletedData)
+       return res.json({ message: `Item with ${id} deleted successfully!!`, deletedData: deletedData });
+
+    } catch (e) {
+       return res.json({ error: e.message })
+    }
+}
+
+
+
+export { addProducts, getAllItems, editItems, deleteItembyId };

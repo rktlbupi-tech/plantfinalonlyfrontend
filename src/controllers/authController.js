@@ -5,9 +5,9 @@ import tokeGenerator from "../utils/tokenGenerator.js";
 export const signup = async (req, res) => {
     try {
         console.log("sigup is running")
-        const { name, email, password } = req.body;
+        const { fullname, email, password } = req.body;
 
-        if (!name || !email || !password) {
+        if (!fullname || !email || !password) {
             return res.status(400).json(
                 {
                     "success": false,
@@ -19,7 +19,7 @@ export const signup = async (req, res) => {
         let userdata = await User.findOne({ email });
         if (userdata) return res.status(400).json({ "success": false, message: "Email already is used!!" });
 
-        const user = new User({ name, email, password });
+        const user = new User({ fullname, email, password });
         await user.save().then(() => {
             console.log("Data have been saved")
         }).catch((e) => {
@@ -27,16 +27,18 @@ export const signup = async (req, res) => {
         })
 
         const token = tokeGenerator({ email, password });
-
+        const userSavedData = await User.findOne({email})
         return res.status(200).json(
             {
                 "success": true,
                 "message": "Your are register succesfully",
-                "token": token
+                "token": token,
+                "data" : userSavedData
             }
         )
     }
     catch (e) {
+        console.log(e);
         res.json({ "message": "error", e })
     }
 }
