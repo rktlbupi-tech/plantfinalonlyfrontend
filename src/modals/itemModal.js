@@ -29,26 +29,28 @@ const productSchema = new mongoose.Schema(
       min: 0,
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-    //   required: true,
+      type: String,
+      required: true,
     },
     subcategory: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Subcategory",
-    //   required: false,
+      type: String,
+      required: true
     },
     seller: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    //   required: true,
+      ref: "users",
+      required: true,
     },
+    isApproved: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     timestamps: { createdAt: true, updatedAt: true },
   }
 );
 
-const Items =  mongoose.model("product", productSchema);
+const Items = mongoose.model("product", productSchema);
 
 export default Items;

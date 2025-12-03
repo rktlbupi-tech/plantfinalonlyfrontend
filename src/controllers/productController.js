@@ -1,88 +1,93 @@
 import Items from "../modals/itemModal.js";
 
 const addProducts = async (req, res) => {
-
     try {
-        const { name, description, price, images, stock, category, subcategory, seller } = req.body;
+        const { name, description, price, images, stock, category, subcategory } = req.body;
 
         if (!name || !description || !images || !stock || !category) {
-            return res.json({ message: 'All field is required!!' });
+            return res.status(400).json({ message: 'All fields are required!!' });
         }
 
-        console.log(name)
-
         const items = new Items({
-            name: name,
-            description: description,
-            price: price,
-            images: images,
-            stock: stock,
-            category: category,
-            subcategory: subcategory,
-            seller: seller
-        })
+            name,
+            description,
+            price,
+            images,
+            stock,
+            category,
+            subcategory,
+            seller: req.user._id // Assign seller from authenticated user
+        });
 
         await items.save();
-        return res.json({ message: "Item created successfully!!" })
+        return res.status(201).json({ message: "Item created successfully!!", data: items });
     }
     catch (e) {
-        console.log(e)
-        res.json({ message: "Error is occuring...", e })
+        console.log(e);
+        res.status(500).json({ message: "Error occurred while creating item", error: e.message });
     }
-
 }
 
 const getAllItems = async (req, res) => {
-    const data = await Items.find();
-    return res.json({ success: true, message: "All items fetched successfully!!", data: data })
-}
+    try {
+        // Only show approved products to public, unless admin/vendor requesting their own (logic can be refined)
+        // For now, public endpoint returns only approved items
+        const items = await Items.find({ isApproved: true }).populate("seller", "fullname email");
+        res.status(200).json({ message: "Items fetched successfully", data: items });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};
 
 const editItems = async (req, res) => {
     try {
-        console.log("idididididdidijskfnksn")
         const { id } = req.params;
-
-        console.log(id)
-
-        const { name, description, price, images, stock, category, subcategory, seller } = req.body;
-
-        console.log(name)
+        const { name, description, price, images, stock, category, subcategory } = req.body;
 
         if (!id) {
-            return res.json({ message: "To edit item provide ItemId" });
+            return res.status(400).json({ message: "ItemId is required" });
         }
 
-        console.log("sfkjslkj")
+        const item = await Items.findById(id);
+        if (!item) {
+            return res.status(404).json({ message: "Item not found" });
+        }
 
-        await Items.findByIdAndUpdate(id, { name: name, description: description, price: price });
+        // Check ownership or admin role
+        if (item.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Unauthorized to edit this item" });
+        }
 
+        const updatedItem = await Items.findByIdAndUpdate(id, {
+            name, description, price, images, stock, category, subcategory
+        }, { new: true });
 
-        return res.json({ message: "Edit successfully!!" })
+        return res.json({ message: "Edit successfully!!", data: updatedItem });
     }
     catch (e) {
-        return res.json({ message: e })
+        return res.status(500).json({ message: e.message });
     }
-
 }
 
 const deleteItembyId = async (req, res) => {
     try {
-        console.log("deleted call")
         const { id } = req.params;
 
-        const notFound = await Items.findById(id);
-        if(!notFound)
-        {
-            return res.json({message:"Item is not found with this Id."});
+        const item = await Items.findById(id);
+        if (!item) {
+            return res.status(404).json({ message: "Item not found with this Id." });
         }
-      
-        const deletedData = await Items.findByIdAndDelete(id);
 
-        console.log("deleted call12345",deletedData)
-       return res.json({ message: `Item with ${id} deleted successfully!!`, deletedData: deletedData });
+        // Check ownership or admin role
+        if (item.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Unauthorized to delete this item" });
+        }
+
+        const deletedData = await Items.findByIdAndDelete(id);
+        return res.json({ message: `Item deleted successfully!!`, deletedData: deletedData });
 
     } catch (e) {
-       return res.json({ error: e.message })
+        return res.status(500).json({ error: e.message });
     }
 }
 

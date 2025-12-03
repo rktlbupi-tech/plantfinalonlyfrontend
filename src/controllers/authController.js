@@ -5,7 +5,7 @@ import tokeGenerator from "../utils/tokenGenerator.js";
 export const signup = async (req, res) => {
     try {
         console.log("sigup is running")
-        const { fullname, email, password } = req.body;
+        const { fullname, email, password, role } = req.body;
 
         if (!fullname || !email || !password) {
             return res.status(400).json(
@@ -19,7 +19,7 @@ export const signup = async (req, res) => {
         let userdata = await User.findOne({ email });
         if (userdata) return res.status(400).json({ "success": false, message: "Email already is used!!" });
 
-        const user = new User({ fullname, email, password });
+        const user = new User({ fullname, email, password, role: role || 'user' });
         await user.save().then(() => {
             console.log("Data have been saved")
         }).catch((e) => {
@@ -27,13 +27,13 @@ export const signup = async (req, res) => {
         })
 
         const token = tokeGenerator({ email, password });
-        const userSavedData = await User.findOne({email})
+        const userSavedData = await User.findOne({ email })
         return res.status(200).json(
             {
                 "success": true,
                 "message": "Your are register succesfully",
                 "token": token,
-                "data" : userSavedData
+                "data": userSavedData
             }
         )
     }
@@ -68,10 +68,10 @@ export const login = async (req, res) => {
 
         const user1 = await User.findOne({ email });
 
-        if(!user1) return res.json({message:"user does not exists please register"})
+        if (!user1) return res.json({ message: "user does not exists please register" })
         console.log(user1);
-        console.log("sddsfdffs",user1.password)
-      
+        console.log("sddsfdffs", user1.password)
+
 
         if (!user1) return res.status(404).json({ success: false, message: "aap dbms me nahi hai" })
         if (password != user1.password) return res.status(400).json({
@@ -80,20 +80,44 @@ export const login = async (req, res) => {
 
         })
 
+        // Check if user is blocked
+        if (user1.isBlocked) {
+            return res.status(403).json({ success: false, message: "Your account has been blocked. Please contact admin." });
+        }
+
         const token = tokeGenerator({ email, password });
 
         return res.status(200).json(
             {
                 success: true,
                 message: "Your are login succesfully",
-                data: { token: token, logindata:user1 }
+                data: { token: token, logindata: user1 }
             }
         )
     } catch (e) {
         console.log(e)
         res.json({ error: e.message });
     }
-
-
-
 }
+
+export const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user._id; // From authMiddleware
+        const updates = req.body;
+
+        // Prevent updating sensitive fields like password or role directly here if needed
+        // For now, allowing address updates and basic info
+
+        const user = await User.findByIdAndUpdate(userId, updates, { new: true });
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: user
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+};

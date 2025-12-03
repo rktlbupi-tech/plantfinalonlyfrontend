@@ -10,6 +10,9 @@ import RolesRouter from './src/routes/rolesroutes.js';
 import authMiddleware from './src/middleware/authMiddleware.js';
 import categoryRouter from './src/routes/categoryRoutes.js';
 import productRouter from './src/routes/productRoutes.js';
+import orderRouter from './src/routes/orderRoutes.js';
+import adminRouter from './src/routes/adminRoutes.js';
+import seedAdmin from './seedAdmin.js';
 
 const app = express();
 
@@ -19,18 +22,20 @@ app.use(cors());
 // Task 
 // make api for categories of plants 
 
-app.get('/health',(req,res)=>{
+app.get('/health', (req, res) => {
     res.send("Server is Running correctly ...");
 })
 
 db();
-
-app.use('/api/v1/auth',authRoutes)
+// seedAdmin();
+app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/profile', profileRouter);
-app.use('/api/v1/category',categoryRouter);
-app.use('/api/v1/items',productRouter);
-app.use('/roles',RolesRouter);
+app.use('/api/v1/category', categoryRouter);
+app.use('/api/v1/product', productRouter);
+app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/admin', adminRouter);
+app.use('/roles', RolesRouter);
 
-app.listen(process.env.PORT,()=>{
-     console.log(`Server run ho raha es ${process.env.PORT} PORT per `)
+app.listen(process.env.PORT, () => {
+    console.log(`Server run ho raha es ${process.env.PORT} PORT per `)
 })
